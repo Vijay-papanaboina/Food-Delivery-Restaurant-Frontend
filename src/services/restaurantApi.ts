@@ -4,7 +4,7 @@ import type { Restaurant, MenuItem } from "@/types";
 
 export class RestaurantApi extends ApiService {
   constructor() {
-    super(config.restaurantApiUrl, true);
+    super(config.restaurantApiUrl);
   }
 
   getRestaurantProfile = async (restaurantId: string): Promise<Restaurant> => {

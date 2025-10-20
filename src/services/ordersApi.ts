@@ -9,7 +9,8 @@ import type {
 
 export class OrdersApi extends ApiService {
   constructor() {
-    super(config.restaurantApiUrl, true);
+    const orderApiUrl = config.userApiUrl.replace("5005", "5001");
+    super(orderApiUrl);
   }
 
   getKitchenOrders = async (
