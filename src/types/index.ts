@@ -4,7 +4,7 @@ export interface KitchenOrder {
   user_id: string;
   items: OrderItem[];
   total: number;
-  status: "received" | "preparing" | "ready";
+  status: "received" | "preparing" | "ready" | "delivered";
   received_at: string;
   started_at?: string;
   estimated_ready_time?: string;

@@ -22,6 +22,14 @@ export const Orders = () => {
   const kitchenOrders = kitchenData?.orders || [];
   const orderHistory = historyData?.orders || [];
 
+  // Filter orders for better tab separation
+  const activeOrders = kitchenOrders.filter(
+    (order) => order.status !== "delivered"
+  );
+  const deliveredOrders = kitchenOrders.filter(
+    (order) => order.status === "delivered"
+  );
+
   const handleMarkReady = (orderId: string) => {
     markReadyMutation.mutate(orderId);
   };
@@ -37,6 +45,7 @@ export const Orders = () => {
       received: { variant: "secondary", label: "Received" },
       preparing: { variant: "default", label: "Preparing" },
       ready: { variant: "outline", label: "Ready" },
+      delivered: { variant: "default", label: "Delivered" },
     };
 
     const config = variants[status] || { variant: "secondary", label: status };
@@ -56,8 +65,7 @@ export const Orders = () => {
         <TabsList className="mb-4">
           <TabsTrigger value="active">
             <ChefHat className="h-4 w-4 mr-2" />
-            Active Orders (
-            {kitchenOrders.filter((o) => o.status !== "ready").length})
+            Active Orders ({activeOrders.length})
           </TabsTrigger>
           <TabsTrigger value="history">
             <Clock className="h-4 w-4 mr-2" />
@@ -72,7 +80,7 @@ export const Orders = () => {
               <Skeleton className="h-48 w-full" />
               <Skeleton className="h-48 w-full" />
             </>
-          ) : kitchenOrders.length === 0 ? (
+          ) : activeOrders.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <ChefHat className="h-16 w-16 text-muted-foreground mb-4" />
@@ -84,7 +92,7 @@ export const Orders = () => {
             </Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
-              {kitchenOrders.map((order) => (
+              {activeOrders.map((order) => (
                 <Card key={order.order_id} className="overflow-hidden">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
@@ -121,7 +129,7 @@ export const Orders = () => {
                       <div className="flex justify-between items-center pt-2 border-t">
                         <span className="font-semibold">Total:</span>
                         <span className="text-lg font-bold">
-                          ${order.total.toFixed(2)}
+                          ${Number(order.total).toFixed(2)}
                         </span>
                       </div>
 
@@ -134,16 +142,17 @@ export const Orders = () => {
                       )}
 
                       {/* Mark Ready Button */}
-                      {order.status !== "ready" && (
-                        <Button
-                          onClick={() => handleMarkReady(order.order_id)}
-                          disabled={markReadyMutation.isPending}
-                          className="w-full mt-2"
-                        >
-                          <CheckCircle2 className="h-4 w-4 mr-2" />
-                          Mark as Ready
-                        </Button>
-                      )}
+                      {order.status !== "ready" &&
+                        order.status !== "delivered" && (
+                          <Button
+                            onClick={() => handleMarkReady(order.order_id)}
+                            disabled={markReadyMutation.isPending}
+                            className="w-full mt-2"
+                          >
+                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            Mark as Ready
+                          </Button>
+                        )}
                     </div>
                   </CardContent>
                 </Card>
@@ -160,7 +169,7 @@ export const Orders = () => {
               <Skeleton className="h-24 w-full" />
               <Skeleton className="h-24 w-full" />
             </div>
-          ) : orderHistory.length === 0 ? (
+          ) : orderHistory.length === 0 && deliveredOrders.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Clock className="h-16 w-16 text-muted-foreground mb-4" />
@@ -172,6 +181,34 @@ export const Orders = () => {
             </Card>
           ) : (
             <div className="space-y-3">
+              {/* Show delivered orders from kitchen first */}
+              {deliveredOrders.map((order) => (
+                <Card key={`kitchen-${order.order_id}`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <p className="font-semibold">
+                            #{order.order_id.slice(0, 8)}
+                          </p>
+                          <Badge variant="outline">{order.status}</Badge>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          <p>Items: {order.items.length}</p>
+                          <p>Total: ${Number(order.total).toFixed(2)}</p>
+                          <p>
+                            Completed:{" "}
+                            {new Date(
+                              order.ready_at || order.received_at
+                            ).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {/* Then show order history from order service */}
               {orderHistory.map((order) => (
                 <Card key={order.order_id}>
                   <CardContent className="p-4">
@@ -195,7 +232,7 @@ export const Orders = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-bold">
-                          ${order.total.toFixed(2)}
+                          ${Number(order.total).toFixed(2)}
                         </p>
                       </div>
                     </div>
