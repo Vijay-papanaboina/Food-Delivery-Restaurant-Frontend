@@ -1,16 +1,29 @@
 import { useAuthStore } from "@/store/authStore";
 import { useUIStore } from "@/store/uiStore";
+import { useLogout } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Menu, LogOut, Sun, Moon } from "lucide-react";
 import { logger } from "@/lib/logger";
 
 export const Header = () => {
-  const { user, logout } = useAuthStore();
-  const { sidebarOpen, toggleSidebar, theme, setTheme } = useUIStore();
+  const { user } = useAuthStore();
+  const { toggleSidebar, theme, setTheme } = useUIStore();
+  const logoutMutation = useLogout();
 
   const handleLogout = () => {
-    logout();
+    logoutMutation.mutate();
     logger.info("User logged out");
   };
 
@@ -19,9 +32,14 @@ export const Header = () => {
   };
 
   return (
-    <header className="h-16 border-b bg-background flex items-center justify-between px-4">
+    <header className="sticky top-0 z-50 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between px-4">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+          className="lg:hidden"
+        >
           <Menu className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-semibold">Restaurant Dashboard</h1>
@@ -30,7 +48,9 @@ export const Header = () => {
       <div className="flex items-center gap-4">
         {user && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">{user.name}</span>
+            <span className="text-sm text-muted-foreground hidden sm:inline">
+              {user.name}
+            </span>
             <Badge variant="secondary">{user.role}</Badge>
           </div>
         )}
@@ -43,9 +63,32 @@ export const Header = () => {
           )}
         </Button>
 
-        <Button variant="ghost" size="icon" onClick={handleLogout}>
-          <LogOut className="h-5 w-5" />
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to logout? You will need to sign in again
+                to access the restaurant dashboard.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleLogout}
+                disabled={logoutMutation.isPending}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {logoutMutation.isPending ? "Logging out..." : "Logout"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </header>
   );

@@ -1,7 +1,7 @@
 import { config } from "@/config/env";
-import { apiService } from "./baseApi";
 import { useAuthStore, type User } from "@/store/authStore";
 import { logger } from "@/lib/logger";
+import { ApiService } from "./baseApi";
 
 interface BackendUser {
   id: string;
@@ -21,16 +21,16 @@ interface LoginResponse {
   user: BackendUser;
 }
 
-interface ValidateResponse {
-  user: BackendUser;
-}
-
 interface RefreshResponse {
   accessToken: string;
   user: BackendUser;
 }
 
-class AuthApi {
+// Auth API
+export class AuthApi extends ApiService {
+  constructor() {
+    super(config.userApiUrl, true); // Enable credentials for auth service
+  }
   private transformBackendUser(backendUser: BackendUser): User {
     return {
       id: backendUser.id,
@@ -41,131 +41,107 @@ class AuthApi {
     };
   }
 
-  private handleRefreshResponse(response: RefreshResponse) {
-    const user = this.transformBackendUser(response.user);
-    useAuthStore.getState().setAccessToken(response.accessToken);
-    useAuthStore.getState().setUser(user);
-    return { user, accessToken: response.accessToken };
+  private handleRefreshResponse(refreshResponse: RefreshResponse): {
+    isAuthenticated: boolean;
+    user: User;
+  } {
+    const user = this.transformBackendUser(refreshResponse.user);
+
+    // Store new token in localStorage and update Zustand
+    localStorage.setItem("access_token", refreshResponse.accessToken);
+    useAuthStore.getState().login(user, refreshResponse.accessToken);
+
+    return { isAuthenticated: true, user };
   }
 
-  async login(
+  login = async (
     credentials: LoginRequest
-  ): Promise<{ user: User; accessToken: string }> {
+  ): Promise<{
+    user: User;
+    accessToken: string;
+  }> => {
+    const result = await this.post<LoginResponse>(
+      "/api/auth/login/restaurant",
+      credentials
+    );
+
+    const user = this.transformBackendUser(result.user);
+    useAuthStore.getState().login(user, result.accessToken);
+
+    logger.info("Login successful", { userId: user.id, role: user.role });
+    return { user, accessToken: result.accessToken };
+  };
+
+  validateToken = async (): Promise<{ message: string; user: BackendUser }> => {
+    return this.post("/api/auth/validate");
+  };
+
+  refreshToken = async (): Promise<{
+    message: string;
+    accessToken: string;
+    user: BackendUser;
+  }> => {
+    return this.post("/api/auth/refresh");
+  };
+
+  checkAuth = async (): Promise<{ isAuthenticated: boolean; user?: User }> => {
     try {
-      const response = await apiService.post<LoginResponse>(
-        `${config.userApiUrl}/api/auth/login/restaurant`,
-        credentials
-      );
+      // Step 1: Check localStorage for access token
+      const storedToken = localStorage.getItem("access_token");
 
-      const user = this.transformBackendUser(response.data.user);
-      useAuthStore.getState().login(user, response.data.accessToken);
-
-      logger.info("Login successful", { userId: user.id, role: user.role });
-      return { user, accessToken: response.data.accessToken };
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      const errorData = (error as { response?: { data?: unknown } }).response
-        ?.data;
-      logger.error("Login failed", errorData || errorMessage);
-      throw error;
-    }
-  }
-
-  async validateToken(): Promise<User> {
-    try {
-      const response = await apiService.get<ValidateResponse>(
-        `${config.userApiUrl}/api/auth/validate`
-      );
-
-      const user = this.transformBackendUser(response.data.user);
-
-      useAuthStore.getState().setUser(user);
-      logger.info("Token validation successful", {
-        userId: user.id,
-        role: user.role,
-      });
-      return user;
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      const errorData = (error as { response?: { data?: unknown } }).response
-        ?.data;
-      logger.error("Token validation failed", errorData || errorMessage);
-      throw error;
-    }
-  }
-
-  async refreshToken(): Promise<{ user: User; accessToken: string }> {
-    try {
-      const response = await apiService.post<RefreshResponse>(
-        `${config.userApiUrl}/api/auth/refresh`,
-        {},
-        { withCredentials: true }
-      );
-
-      const result = this.handleRefreshResponse(response.data);
-
-      logger.info("Token refresh successful", {
-        userId: result.user.id,
-        role: result.user.role,
-      });
-      return result;
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      const errorData = (error as { response?: { data?: unknown } }).response
-        ?.data;
-      logger.error("Token refresh failed", errorData || errorMessage);
-      throw error;
-    }
-  }
-
-  async checkAuth(): Promise<User | null> {
-    try {
-      const token = localStorage.getItem("access_token");
-
-      if (!token) {
-        logger.info(
-          "No token found in localStorage, attempting refresh from cookie"
-        );
+      if (storedToken) {
+        // Step 2: Validate the token
         try {
-          const result = await this.refreshToken();
-          return result.user;
-        } catch {
-          logger.info("Refresh from cookie failed, user not authenticated");
-          return null;
+          const validateResponse = await this.validateToken();
+
+          // Transform BackendUser to User
+          const user: User = this.transformBackendUser(validateResponse.user);
+
+          // Update user in Zustand store
+          useAuthStore.getState().login(user, storedToken);
+          return { isAuthenticated: true, user };
+        } catch (validateError) {
+          // Step 3: Token validation failed, try to refresh
+          logger.warn(`[AuthAPI] Token validation failed, attempting refresh`, {
+            error: validateError,
+          });
+
+          try {
+            const refreshResponse = await this.refreshToken();
+            return this.handleRefreshResponse(refreshResponse);
+          } catch (error) {
+            logger.error(`[AuthAPI] Refresh token failed`, { error });
+            // Clear invalid tokens
+            localStorage.removeItem("access_token");
+            useAuthStore.getState().logout();
+            return { isAuthenticated: false };
+          }
         }
       }
 
-      // Add token to store if not present
-      if (!useAuthStore.getState().accessToken) {
-        useAuthStore.getState().setAccessToken(token);
-      }
-
-      // Validate token
+      // No stored token found, but try to refresh from HTTP-only cookie
+      logger.info(
+        `[AuthAPI] No stored token found, attempting refresh from cookie`
+      );
       try {
-        const user = await this.validateToken();
-        return user;
-      } catch {
-        logger.info("Token validation failed, attempting refresh");
-        try {
-          const result = await this.refreshToken();
-          return result.user;
-        } catch {
-          logger.info("Token refresh failed, user not authenticated");
-          useAuthStore.getState().logout();
-          return null;
-        }
+        const refreshResponse = await this.refreshToken();
+        return this.handleRefreshResponse(refreshResponse);
+      } catch (error) {
+        logger.error(`[AuthAPI] Refresh token failed`, { error });
+        // Clear any invalid tokens
+        localStorage.removeItem("access_token");
+        useAuthStore.getState().logout();
+        return { isAuthenticated: false };
       }
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      logger.error("Auth check failed", errorMessage);
-      useAuthStore.getState().logout();
-      return null;
+    } catch (error) {
+      logger.error(`[AuthAPI] Auth check failed`, { error });
+      return { isAuthenticated: false };
     }
-  }
+  };
+
+  logout = async (): Promise<{ message: string }> => {
+    return this.post("/api/auth/logout");
+  };
 }
 
 export const authApi = new AuthApi();

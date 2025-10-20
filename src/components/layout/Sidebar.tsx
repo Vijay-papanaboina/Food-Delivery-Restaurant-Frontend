@@ -28,7 +28,7 @@ export const Sidebar = () => {
       <div
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         <div className="flex h-full flex-col">
@@ -62,7 +62,12 @@ export const Sidebar = () => {
                         : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     )
                   }
-                  onClick={() => setSidebarOpen(false)}
+                  onClick={() => {
+                    // Only close sidebar on mobile devices
+                    if (window.innerWidth < 1024) {
+                      setSidebarOpen(false);
+                    }
+                  }}
                 >
                   <item.icon className="h-5 w-5" />
                   {item.name}

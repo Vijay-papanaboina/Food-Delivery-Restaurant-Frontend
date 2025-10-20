@@ -1,31 +1,37 @@
 import { useEffect, useRef } from "react";
+import { useAuthStore } from "@/store/authStore";
 import { authApi } from "@/services/authApi";
 import { logger } from "@/lib/logger";
 
+/**
+ * Hook to initialize authentication state on app load
+ * Checks if user is still authenticated using stored tokens
+ */
 export const useAuthInit = () => {
+  const { setLoading } = useAuthStore();
   const hasInitialized = useRef(false);
 
   useEffect(() => {
-    if (hasInitialized.current) {
-      return;
-    }
+    if (hasInitialized.current) return; // Prevent double execution in StrictMode
     hasInitialized.current = true;
-
     const initializeAuth = async () => {
-      try {
-        logger.info("Initializing authentication...");
-        const user = await authApi.checkAuth();
+      setLoading(true);
 
-        if (user) {
+      try {
+        const authResult = await authApi.checkAuth();
+
+        if (authResult.isAuthenticated && authResult.user) {
           logger.info("User authenticated on app load", {
-            userId: user.id,
-            role: user.role,
+            userId: authResult.user.id,
+            role: authResult.user.role,
           });
         } else {
           logger.info("No authenticated user found on app load");
         }
-      } catch (error: any) {
-        logger.error("Auth initialization failed", error.message);
+      } catch (error) {
+        logger.error("[useAuthInit] Auth initialization failed", { error });
+      } finally {
+        setLoading(false);
       }
     };
 
