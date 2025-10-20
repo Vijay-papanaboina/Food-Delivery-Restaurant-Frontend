@@ -3,7 +3,7 @@ export interface KitchenOrder {
   restaurant_id: string;
   user_id: string;
   items: OrderItem[];
-  total: string;
+  total: number;
   status: "received" | "preparing" | "ready";
   received_at: string;
   started_at?: string;
@@ -16,7 +16,7 @@ export interface OrderItem {
   menu_item_id: string;
   name: string;
   quantity: number;
-  price: string;
+  price: number;
   special_instructions?: string;
 }
 
@@ -32,7 +32,7 @@ export interface OrderHistory {
   };
   status: string;
   payment_status: string;
-  total: string;
+  total: number;
   created_at: string;
   confirmed_at?: string;
   delivered_at?: string;

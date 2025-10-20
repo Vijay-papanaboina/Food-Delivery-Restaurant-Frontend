@@ -18,7 +18,7 @@ export class RestaurantApi extends ApiService {
   updateRestaurantStatus = async (
     restaurantId: string,
     isOpen: boolean
-  ): Promise<{ message: string; restaurant: Restaurant }> => {
+  ): Promise<{ message: string; restaurantId: string; isOpen: boolean }> => {
     return this.put(`/api/restaurants/${restaurantId}/status`, {
       isOpen: isOpen,
     });
@@ -34,7 +34,7 @@ export class RestaurantApi extends ApiService {
     restaurantId: string,
     itemId: string,
     isAvailable: boolean
-  ): Promise<{ message: string; menuItem: MenuItem }> => {
+  ): Promise<{ message: string; itemId: string; isAvailable: boolean }> => {
     return this.put(
       `/api/restaurants/${restaurantId}/menu/${itemId}/availability`,
       {

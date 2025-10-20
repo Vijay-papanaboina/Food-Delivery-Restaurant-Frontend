@@ -110,7 +110,9 @@ export const Orders = () => {
                             <span>
                               {item.quantity}x {item.name}
                             </span>
-                            <span className="font-medium">${item.price}</span>
+                            <span className="font-medium">
+                              ${item.price.toFixed(2)}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -119,7 +121,7 @@ export const Orders = () => {
                       <div className="flex justify-between items-center pt-2 border-t">
                         <span className="font-semibold">Total:</span>
                         <span className="text-lg font-bold">
-                          ${order.total}
+                          ${order.total.toFixed(2)}
                         </span>
                       </div>
 
@@ -192,7 +194,9 @@ export const Orders = () => {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-bold">${order.total}</p>
+                        <p className="text-lg font-bold">
+                          ${order.total.toFixed(2)}
+                        </p>
                       </div>
                     </div>
                   </CardContent>
