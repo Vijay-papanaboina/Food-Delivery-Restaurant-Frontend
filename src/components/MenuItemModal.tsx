@@ -87,7 +87,7 @@ export const MenuItemModal = ({
         category: item.category,
         preparationTime: item.preparationTime.toString(),
         isAvailable: item.isAvailable,
-        imageUrl: "",
+        imageUrl: item.imageUrl || "",
       });
     } else {
       // Reset form for add mode
@@ -137,6 +137,7 @@ export const MenuItemModal = ({
       category: formData.category,
       preparationTime: parseInt(formData.preparationTime),
       isAvailable: formData.isAvailable,
+      imageUrl: formData.imageUrl.trim() || undefined,
     };
 
     try {
@@ -297,6 +298,32 @@ export const MenuItemModal = ({
               </Select>
               {errors.category && (
                 <p className="text-sm text-destructive">{errors.category}</p>
+              )}
+            </div>
+
+            {/* Image URL */}
+            <div className="grid gap-2">
+              <Label htmlFor="imageUrl">Image URL (optional)</Label>
+              <Input
+                id="imageUrl"
+                type="url"
+                value={formData.imageUrl}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, imageUrl: e.target.value })
+                }
+                placeholder="https://example.com/image.jpg"
+              />
+              {formData.imageUrl && (
+                <div className="w-full h-48 bg-muted rounded-md flex items-center justify-center overflow-hidden">
+                  <img
+                    src={formData.imageUrl}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                </div>
               )}
             </div>
 

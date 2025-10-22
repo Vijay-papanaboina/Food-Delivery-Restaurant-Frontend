@@ -100,9 +100,17 @@ export const Menu = () => {
                   onClick={() => handleCardClick(item)}
                 >
                   <CardContent className="p-6">
-                    {/* Image Placeholder */}
-                    <div className="w-full h-32 bg-muted rounded-md mb-4 flex items-center justify-center">
-                      <UtensilsCrossed className="h-12 w-12 text-muted-foreground" />
+                    {/* Image */}
+                    <div className="w-full h-48 bg-muted rounded-md mb-4 flex items-center justify-center overflow-hidden">
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <UtensilsCrossed className="h-12 w-12 text-muted-foreground" />
+                      )}
                     </div>
 
                     {/* Item Info */}

@@ -54,6 +54,7 @@ export interface MenuItem {
   category: string;
   isAvailable: boolean;
   preparationTime: number;
+  imageUrl?: string;
   createdAt: string;
 }
 
