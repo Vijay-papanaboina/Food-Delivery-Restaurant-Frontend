@@ -42,6 +42,31 @@ export class RestaurantApi extends ApiService {
       }
     );
   };
+
+  addMenuItem = async (
+    restaurantId: string,
+    itemData: Partial<MenuItem>
+  ): Promise<{ message: string; menuItem: MenuItem }> => {
+    return this.post(`/api/restaurants/${restaurantId}/menu`, itemData);
+  };
+
+  updateMenuItem = async (
+    restaurantId: string,
+    itemId: string,
+    itemData: Partial<MenuItem>
+  ): Promise<{ message: string; menuItem: MenuItem }> => {
+    return this.put(
+      `/api/restaurants/${restaurantId}/menu/${itemId}`,
+      itemData
+    );
+  };
+
+  deleteMenuItem = async (
+    restaurantId: string,
+    itemId: string
+  ): Promise<{ message: string }> => {
+    return this.delete(`/api/restaurants/${restaurantId}/menu/${itemId}`);
+  };
 }
 
 export const restaurantApi = new RestaurantApi();
