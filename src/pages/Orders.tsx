@@ -23,11 +23,13 @@ export const Orders = () => {
   const orderHistory = historyData?.orders || [];
 
   // Filter orders for better tab separation
+  // Active: received, preparing, ready
+  // History: completed, cancelled
   const activeOrders = kitchenOrders.filter(
-    (order) => order.status !== "delivered"
+    (order) => order.status !== "completed" && order.status !== "cancelled"
   );
-  const deliveredOrders = kitchenOrders.filter(
-    (order) => order.status === "delivered"
+  const completedOrders = kitchenOrders.filter(
+    (order) => order.status === "completed" || order.status === "cancelled"
   );
 
   const handleMarkReady = (orderId: string) => {
@@ -45,7 +47,8 @@ export const Orders = () => {
       received: { variant: "secondary", label: "Received" },
       preparing: { variant: "default", label: "Preparing" },
       ready: { variant: "outline", label: "Ready" },
-      delivered: { variant: "default", label: "Delivered" },
+      completed: { variant: "default", label: "Completed" },
+      cancelled: { variant: "destructive", label: "Cancelled" },
     };
 
     const config = variants[status] || { variant: "secondary", label: status };
@@ -143,7 +146,8 @@ export const Orders = () => {
 
                       {/* Mark Ready Button */}
                       {order.status !== "ready" &&
-                        order.status !== "delivered" && (
+                        order.status !== "completed" &&
+                        order.status !== "cancelled" && (
                           <Button
                             onClick={() => handleMarkReady(order.order_id)}
                             disabled={markReadyMutation.isPending}
@@ -169,7 +173,7 @@ export const Orders = () => {
               <Skeleton className="h-24 w-full" />
               <Skeleton className="h-24 w-full" />
             </div>
-          ) : orderHistory.length === 0 && deliveredOrders.length === 0 ? (
+          ) : orderHistory.length === 0 && completedOrders.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Clock className="h-16 w-16 text-muted-foreground mb-4" />
@@ -181,8 +185,8 @@ export const Orders = () => {
             </Card>
           ) : (
             <div className="space-y-3">
-              {/* Show delivered orders from kitchen first */}
-              {deliveredOrders.map((order) => (
+              {/* Show completed orders from kitchen first */}
+              {completedOrders.map((order) => (
                 <Card key={`kitchen-${order.order_id}`}>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
