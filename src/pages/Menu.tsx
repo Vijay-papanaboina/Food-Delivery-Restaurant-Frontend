@@ -99,7 +99,7 @@ export const Menu = () => {
                   className="cursor-pointer hover:shadow-md transition-shadow"
                   onClick={() => handleCardClick(item)}
                 >
-                  <CardContent className="p-6">
+                  <CardContent className="">
                     {/* Image */}
                     <div className="w-full h-48 bg-muted rounded-md mb-4 flex items-center justify-center overflow-hidden">
                       {item.imageUrl ? (
