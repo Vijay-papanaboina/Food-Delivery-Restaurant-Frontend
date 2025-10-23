@@ -18,7 +18,9 @@ export class OrdersApi extends ApiService {
     const params = new URLSearchParams();
     if (status) params.append("status", status);
 
-    return this.get(`/api/kitchen/orders?${params.toString()}`);
+    return this.get(
+      `/api/restaurant-service/kitchen/orders?${params.toString()}`
+    );
   };
 
   getOrderHistory = async (
@@ -35,18 +37,20 @@ export class OrdersApi extends ApiService {
 
     // Use order service for order history
     const orderApiUrl = config.userApiUrl.replace("5005", "5001");
-    return this.get(`${orderApiUrl}/api/orders?${params.toString()}`);
+    return this.get(
+      `${orderApiUrl}/api/order-service/orders?${params.toString()}`
+    );
   };
 
   markOrderReady = async (orderId: string): Promise<{ message: string }> => {
-    return this.post(`/api/kitchen/orders/${orderId}/ready`);
+    return this.post(`/api/restaurant-service/kitchen/orders/${orderId}/ready`);
   };
 
   getOrderStats = async (restaurantId: string): Promise<OrderStats> => {
     // Use order service for restaurant-specific stats
     const orderApiUrl = config.userApiUrl.replace("5005", "5001");
     const response = await this.get<{ message: string; stats: OrderStats }>(
-      `${orderApiUrl}/api/orders/restaurant/${restaurantId}/stats`
+      `${orderApiUrl}/api/order-service/orders/restaurant/${restaurantId}/stats`
     );
     return response.stats;
   };

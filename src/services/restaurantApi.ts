@@ -8,26 +8,29 @@ export class RestaurantApi extends ApiService {
   }
 
   getRestaurantProfile = async (restaurantId: string): Promise<Restaurant> => {
-    return this.get(`/api/restaurants/${restaurantId}`);
+    return this.get(`/api/restaurant-service/restaurants/${restaurantId}`);
   };
 
   getMyRestaurant = async (): Promise<{ restaurant: Restaurant }> => {
-    return this.get("/api/restaurants/my-restaurant");
+    return this.get("/api/restaurant-service/restaurants/my-restaurant");
   };
 
   updateRestaurantStatus = async (
     restaurantId: string,
     isOpen: boolean
   ): Promise<{ message: string; restaurantId: string; isOpen: boolean }> => {
-    return this.put(`/api/restaurants/${restaurantId}/status`, {
-      isOpen: isOpen,
-    });
+    return this.put(
+      `/api/restaurant-service/restaurants/${restaurantId}/status`,
+      {
+        isOpen: isOpen,
+      }
+    );
   };
 
   getMenuItems = async (
     restaurantId: string
   ): Promise<{ menu: MenuItem[] }> => {
-    return this.get(`/api/restaurants/${restaurantId}/menu`);
+    return this.get(`/api/restaurant-service/restaurants/${restaurantId}/menu`);
   };
 
   updateMenuItemAvailability = async (
@@ -36,7 +39,7 @@ export class RestaurantApi extends ApiService {
     isAvailable: boolean
   ): Promise<{ message: string; itemId: string; isAvailable: boolean }> => {
     return this.put(
-      `/api/restaurants/${restaurantId}/menu/${itemId}/availability`,
+      `/api/restaurant-service/restaurants/${restaurantId}/menu/${itemId}/availability`,
       {
         isAvailable: isAvailable,
       }
@@ -47,7 +50,10 @@ export class RestaurantApi extends ApiService {
     restaurantId: string,
     itemData: Partial<MenuItem>
   ): Promise<{ message: string; menuItem: MenuItem }> => {
-    return this.post(`/api/restaurants/${restaurantId}/menu`, itemData);
+    return this.post(
+      `/api/restaurant-service/restaurants/${restaurantId}/menu`,
+      itemData
+    );
   };
 
   updateMenuItem = async (
@@ -56,7 +62,7 @@ export class RestaurantApi extends ApiService {
     itemData: Partial<MenuItem>
   ): Promise<{ message: string; menuItem: MenuItem }> => {
     return this.put(
-      `/api/restaurants/${restaurantId}/menu/${itemId}`,
+      `/api/restaurant-service/restaurants/${restaurantId}/menu/${itemId}`,
       itemData
     );
   };
@@ -65,7 +71,9 @@ export class RestaurantApi extends ApiService {
     restaurantId: string,
     itemId: string
   ): Promise<{ message: string }> => {
-    return this.delete(`/api/restaurants/${restaurantId}/menu/${itemId}`);
+    return this.delete(
+      `/api/restaurant-service/restaurants/${restaurantId}/menu/${itemId}`
+    );
   };
 }
 
