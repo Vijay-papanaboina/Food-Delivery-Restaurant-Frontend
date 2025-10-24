@@ -73,7 +73,11 @@ export class AuthApi extends ApiService {
   };
 
   validateToken = async (): Promise<{ message: string; user: BackendUser }> => {
-    return this.post("/api/user-service/auth/validate");
+    return this.request({
+      method: "POST",
+      url: "/api/user-service/auth/validate",
+      _skipAuthRefresh: true,
+    });
   };
 
   refreshToken = async (): Promise<{
@@ -81,7 +85,11 @@ export class AuthApi extends ApiService {
     accessToken: string;
     user: BackendUser;
   }> => {
-    return this.post("/api/user-service/auth/refresh");
+    return this.request({
+      method: "POST",
+      url: "/api/user-service/auth/refresh",
+      _skipAuthRefresh: true,
+    });
   };
 
   checkAuth = async (): Promise<{ isAuthenticated: boolean; user?: User }> => {
