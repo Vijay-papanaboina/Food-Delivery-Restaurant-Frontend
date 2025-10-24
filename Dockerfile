@@ -3,6 +3,14 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Build arguments for API URLs
+ARG VITE_USER_API_URL=http://api.fooddelivery.local
+ARG VITE_RESTAURANT_API_URL=http://api.fooddelivery.local
+
+# Set environment variables for build
+ENV VITE_USER_API_URL=$VITE_USER_API_URL \
+    VITE_RESTAURANT_API_URL=$VITE_RESTAURANT_API_URL
+
 # Copy package files
 COPY package*.json ./
 
